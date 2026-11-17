@@ -34,6 +34,16 @@
             ]
         },
         {
+            id: 'credential',
+            icon: 'password',
+            permissions: ['credential.view', 'credential.rotate']
+        },
+        {
+            id: 'directory',
+            icon: 'account_tree',
+            permissions: ['directory.view', 'directory.sync']
+        },
+        {
             id: 'user',
             icon: 'group',
             permissions: ['user.view', 'user.create', 'user.edit', 'user.delete']
