@@ -142,8 +142,8 @@ func (s *Server) handleGetManagedCredential(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleRotateManagedCredential(w http.ResponseWriter, r *http.Request) {
-	s.credentialMu.Lock()
-	defer s.credentialMu.Unlock()
+	managedRuntimeFor(s).credentialMu.Lock()
+	defer managedRuntimeFor(s).credentialMu.Unlock()
 	orgID, peerID := r.PathValue("id"), r.PathValue("peerId")
 	username := getUsernameFromCtx(r)
 	if username == "" {
@@ -256,8 +256,8 @@ func sanitizeManagedCredentialError(value string) string {
 }
 
 func (s *Server) handleRevokeManagedCredential(w http.ResponseWriter, r *http.Request) {
-	s.credentialMu.Lock()
-	defer s.credentialMu.Unlock()
+	managedRuntimeFor(s).credentialMu.Lock()
+	defer managedRuntimeFor(s).credentialMu.Unlock()
 	orgID, peerID := r.PathValue("id"), r.PathValue("peerId")
 	if err := s.validateManagedCredentialTarget(orgID, peerID); err != nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
@@ -337,18 +337,4 @@ func (s *Server) managedCredentialCleanupLoop(ctx context.Context) {
 			s.expireManagedCredentials(now)
 		}
 	}
-}
-
-func (s *Server) startManagedServices() {
-	ctx, cancel := context.WithCancel(context.Background())
-	s.backgroundCancel = cancel
-	s.wg.Add(2)
-	go func() {
-		defer s.wg.Done()
-		s.directorySyncLoop(ctx)
-	}()
-	go func() {
-		defer s.wg.Done()
-		s.managedCredentialCleanupLoop(ctx)
-	}()
 }
