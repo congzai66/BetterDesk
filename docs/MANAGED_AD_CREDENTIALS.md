@@ -69,13 +69,14 @@ Copy `BetterDeskManagedAgent.exe` and `Install.ps1` to the endpoint. From elevat
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
 .\Install.ps1 `
-  -CdapsURL "wss://betterdesk.example.com:21122" `
-  -DeviceID "CDAP-DEVICE-ID" `
-  -DeviceToken "CDAP-DEVICE-TOKEN" `
-  -CACert "C:\ProgramData\BetterDesk\internal-ca.pem"
+  -ServerUrl "wss://betterdesk.example.com:21122/cdap" `
+  -DeviceId "RUSTDESK-PEER-ID" `
+  -DeviceToken "BOUND-CDAP-DEVICE-TOKEN" `
+  -RustDeskPath "C:\Program Files\RustDesk\rustdesk.exe" `
+  -TLSCAFile "C:\ProgramData\BetterDesk\internal-ca.pem"
 ```
 
-Use the CDAP device identity bound to the endpoint's RustDesk peer. Keep the token secret. `-CACert` is required when the server certificate is signed by an internal CA; omit it for a certificate already trusted by Windows. Optionally specify `-PeerID`, `-RustDeskPath`, `-InstallDir` and `-ConfigPath`.
+Use the RustDesk peer ID bound to the endpoint's CDAP device token. Keep the token secret. `-TLSCAFile` is required when the server certificate is signed by an internal CA; omit it for a certificate already trusted by Windows. Optionally specify `-InstallDir` and `-BinaryPath` when the defaults are not suitable. The installer writes its configuration to `C:\ProgramData\BetterDesk\managed-agent.json`.
 
 The installer copies the executable, writes UTF-8 configuration, restricts access to SYSTEM and Administrators, and installs the `BetterDeskManagedAgent` service. The default configuration is `C:\ProgramData\BetterDesk\managed-agent.json`; expiry metadata is stored separately in `managed-state.json` without plaintext passwords.
 
