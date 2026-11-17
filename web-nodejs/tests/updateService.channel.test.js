@@ -119,16 +119,27 @@ describe('updateService update channel', () => {
     });
 
     test('preflight stays ready when server update needs Go toolchain bootstrap', async () => {
+        const childProcess = require('child_process');
+        const https = require('https');
+        const { EventEmitter } = require('events');
+        const execSyncSpy = jest.spyOn(childProcess, 'execSync').mockReturnValue('/test/go\n');
+        const execFileSyncSpy = jest.spyOn(childProcess, 'execFileSync').mockReturnValue('go version go1.20 linux/amd64');
         const updateService = loadUpdateService({ dataDir });
-        const goSpy = jest.spyOn(updateService, 'checkGoAvailable')
-            .mockReturnValue({
-                available: true,
-                meetsMinimum: false,
-                needsUpgrade: true,
-                version: 'go version go1.20 linux/amd64',
+        const httpsSpy = jest.spyOn(https, 'get').mockImplementation((_options, callback) => {
+            const response = new EventEmitter();
+            response.statusCode = 200;
+            response.headers = {};
+            response.resume = jest.fn();
+            const request = new EventEmitter();
+            request.setTimeout = jest.fn();
+            request.destroy = jest.fn();
+            callback(response);
+            process.nextTick(() => {
+                response.emit('data', Buffer.from(JSON.stringify({ sha: 'abc123def4567890abcdef1234567890abcdef12' })));
+                response.emit('end');
             });
-        const remoteSpy = jest.spyOn(updateService, 'getRemoteHeadSHA')
-            .mockResolvedValue({ sha: 'abc123def4567890abcdef1234567890abcdef12' });
+            return request;
+        });
 
         try {
             const pf = await updateService.runUpdatePreflight({
@@ -139,8 +150,9 @@ describe('updateService update channel', () => {
             expect(pf.issues).toHaveLength(0);
             expect(pf.warnings.join(' ')).toMatch(/toolchain/i);
         } finally {
-            goSpy.mockRestore();
-            remoteSpy.mockRestore();
+            execSyncSpy.mockRestore();
+            execFileSyncSpy.mockRestore();
+            httpsSpy.mockRestore();
         }
     });
 });

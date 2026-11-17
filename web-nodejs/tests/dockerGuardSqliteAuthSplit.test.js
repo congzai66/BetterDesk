@@ -7,6 +7,7 @@ const { spawnSync } = require('child_process');
 
 const guardScript = path.resolve(__dirname, '..', '..', 'docker', 'guard-sqlite-auth-split.sh');
 const hasPosixShell = spawnSync('sh', ['-c', 'exit 0'], { stdio: 'ignore' }).status === 0;
+const hasSqlite3 = spawnSync('sqlite3', ['--version'], { stdio: 'ignore' }).status === 0;
 
 function runGuard(env) {
     const script = `
@@ -19,7 +20,7 @@ function runGuard(env) {
     });
 }
 
-(hasPosixShell ? describe : describe.skip)('Docker guard_sqlite_auth_split', () => {
+(hasPosixShell && hasSqlite3 ? describe : describe.skip)('Docker guard_sqlite_auth_split (requires posix sh and sqlite3)', () => {
     let tempDir;
 
     beforeEach(() => {
