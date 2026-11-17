@@ -104,7 +104,7 @@ func (pg *PostgresDB) ListExpiredManagedCredentials(nowRFC3339 string, limit int
 			&c.ExpiresAt, &c.UpdatedBy, &c.LastError, &c.CreatedAt, &c.UpdatedAt); err != nil {
 			return nil, err
 		}
-		out = append(out, c)
+		out = append(out, &c)
 	}
 	return out, rows.Err()
 }
