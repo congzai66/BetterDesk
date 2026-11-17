@@ -1,7 +1,7 @@
 <%- include('layouts/main', {
     title: _('nav.devices'),
     pageStyles: ['devices', 'device-detail'],
-    pageScripts: ['devices', 'deviceDetail', 'rdclient/mesh-terminal', 'rdclient/mesh-port-forward'],
+    pageScripts: ['devices', 'directory', 'managed-credential', 'deviceDetail', 'rdclient/mesh-terminal', 'rdclient/mesh-port-forward'],
     currentPage: 'devices',
     breadcrumb: [{ label: _('nav.devices') }],
     body: `
@@ -16,6 +16,10 @@
                     <button class="btn btn-primary btn-sm" id="add-remote-target-btn">
                         <span class="material-icons">desktop_windows</span>
                         <span class="btn-label">${_('devices.add_remote_target')}</span>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="ad-directory-btn">
+                        <span class="material-icons">domain</span>
+                        <span class="btn-label">AD Directory</span>
                     </button>
                     <button class="btn btn-secondary btn-sm" id="sync-btn">
                         <span class="material-icons">sync</span>
