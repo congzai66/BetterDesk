@@ -28,6 +28,7 @@ Feature branch: `feature/ad-managed-credentials`
 | Console full Jest suite | PASS — 139 suites passed, 2 conditionally skipped; 928 tests passed, 3 skipped |
 | `npm run check:frontend` | PASS — 116 browser scripts |
 | `node --check` on modified Node.js files | PASS |
+| Managed Compose override static validation | PASS — YAML parsing, CDAP port/TLS, required secrets and read-only certificate mounts |
 
 The Docker split-volume shell test is conditionally skipped when the host does not provide both POSIX `sh` and the `sqlite3` CLI. The production guard itself was not changed. The other skipped suite is an existing conditional suite. No failed test remains in the final run.
 

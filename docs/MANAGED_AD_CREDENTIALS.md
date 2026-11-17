@@ -31,6 +31,20 @@ openssl rand -base64 32
 
 Back up this secret independently of the database. Losing it makes existing encrypted peer credentials undecryptable. Changing it without a planned migration has the same effect.
 
+### Source-build Docker Compose
+
+The feature branch includes `docker-compose.managed-ad.yml`, which adds TCP 21122, enforces CDAP TLS, mounts the certificate and key read-only, and passes the independent vault secret. Upstream prebuilt images do not contain this branch; use the source-build `docker-compose.yml` rather than a `quick` prebuilt-image file.
+
+```sh
+cp managed-ad.env.example .env
+# Edit .env: replace every placeholder and use absolute host certificate paths.
+# Generate independent secrets, for example: openssl rand -base64 32
+docker compose -f docker-compose.yml -f docker-compose.managed-ad.yml config --quiet
+docker compose -f docker-compose.yml -f docker-compose.managed-ad.yml up -d --build
+```
+
+`ORG_PEER_VAULT_KEY`, `CDAP_TLS_CERT` and `CDAP_TLS_KEY` are required by the override. `CDAP_TLS_CERT` and `CDAP_TLS_KEY` are Docker-host paths; the container receives them at fixed paths under `/opt/rustdesk/cdap/`. The certificate SAN must cover the DNS name used by Windows agents. Back up `.env` and the vault secret securely, but never commit them.
+
 The CDAP gateway defaults to TCP `21122`. Allow managed endpoints to reach that port over TLS. Keep the existing RustDesk rendezvous/relay and Console rules unchanged.
 
 Start the upgraded BetterDesk server once to apply the `managed_credentials` and `directory_objects` migrations. SQLite and PostgreSQL are supported. Migrations are idempotent and run lazily at managed-store entry points, so both API and direct database calls initialize the schema safely. Take a database backup before upgrading a production installation.

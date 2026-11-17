@@ -1,0 +1,26 @@
+# Managed AD / temporary credential deployment override.
+# Use together with the source-build docker-compose.yml; upstream prebuilt
+# images do not contain this feature branch.
+#
+# Required .env values:
+#   ORG_PEER_VAULT_KEY=<long independent random secret>
+#   CDAP_TLS_CERT=/absolute/host/path/fullchain.pem
+#   CDAP_TLS_KEY=/absolute/host/path/private-key.pem
+#
+# docker compose -f docker-compose.yml -f docker-compose.managed-ad.yml up -d --build
+
+services:
+  server:
+    ports:
+      - "21122:21122" # CDAP WebSocket gateway; TLS is mandatory for this feature
+    environment:
+      CDAP_ENABLED: "Y"
+      CDAP_PORT: "21122"
+      CDAP_TLS: "Y"
+      CDAP_TLS_REQUIRED: "true"
+      TLS_CERT: "/opt/rustdesk/cdap/fullchain.pem"
+      TLS_KEY: "/opt/rustdesk/cdap/private-key.pem"
+      ORG_PEER_VAULT_KEY: "${ORG_PEER_VAULT_KEY:?Set ORG_PEER_VAULT_KEY in .env}"
+    volumes:
+      - "${CDAP_TLS_CERT:?Set CDAP_TLS_CERT in .env}:/opt/rustdesk/cdap/fullchain.pem:ro"
+      - "${CDAP_TLS_KEY:?Set CDAP_TLS_KEY in .env}:/opt/rustdesk/cdap/private-key.pem:ro"
