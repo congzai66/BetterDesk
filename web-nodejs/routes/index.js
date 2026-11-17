@@ -83,7 +83,7 @@ function requireJsonContentType(req, res, next) {
     }
     // Disaster-recovery restore uploads multipart/form-data (field "backup").
     // Do not exempt /api/settings/updates/restore — that endpoint is JSON-only.
-    if (req.path === '/api/settings/updates/restore') {
+    if (req.path === '/api/settings/restore') {
         return next();
     }
     // Check Content-Type
@@ -120,7 +120,7 @@ router.use('/', require('./guest.routes'));
 router.use('/api/i18n', i18nRoutes);
 // bdApiRoutes now mounted in server.js (before CSRF) for desktop client access
 router.use('/api/bd', inventoryRoutes);     // device-facing: /api/bd/inventory, /api/bd/telemetry
-router.use('/api/inventory', inventoryRoutes); // admin-facing: /api/inventory/:id
+router.use('/api/inventory', inventoryRoutes); // admin-facing: /api/inventory, /api/inventory/:id
 router.use('/api/tickets', ticketsRoutes);      // admin-facing: /api/tickets CRUD
 router.use('/api/tickets', ticketsRoutes);      // device-facing: /api/tickets/bd (agent creates tickets)
 router.use('/api/bd', activityRoutes);           // device-facing: /api/bd/activity
