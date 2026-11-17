@@ -35,6 +35,9 @@ func (w *secureHTTPResponseWriter) Write(data []byte) (int, error) {
 
 func (s *Server) secureEnvelopeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.serveManagedAPI(w, r) {
+			return
+		}
 		if r.Header.Get(secureHTTPEnvelopeHeader) != "1" {
 			next.ServeHTTP(w, r)
 			return
