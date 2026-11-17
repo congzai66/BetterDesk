@@ -5,8 +5,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/unitronix/betterdesk-server/audit"
+	"github.com/unitronix/betterdesk-server/auth"
 	"github.com/unitronix/betterdesk-server/db"
 )
 
@@ -41,6 +43,21 @@ func (s *Server) handleSetOrgPeerCredential(w http.ResponseWriter, r *http.Reque
 	if s.peerVault == nil {
 		http.Error(w, `{"error":"peer credential vault not configured"}`, http.StatusServiceUnavailable)
 		return
+	}
+	managed, err := s.GetManagedCredential(orgID, peerID)
+	if err != nil {
+		http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+		return
+	}
+	if managed != nil && (managed.State == "active" || managed.State == "pending") {
+		writeJSON(w, http.StatusConflict, map[string]string{"error": "Managed credentials must be changed through the rotation API"})
+		return
+	}
+	if managed != nil {
+		if err := s.DeleteManagedCredential(orgID, peerID); err != nil {
+			http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+			return
+		}
 	}
 
 	var body struct {
@@ -100,6 +117,21 @@ func (s *Server) handleClearOrgPeerCredential(w http.ResponseWriter, r *http.Req
 		http.Error(w, `{"error":"invalid peer id"}`, http.StatusBadRequest)
 		return
 	}
+	managed, err := s.GetManagedCredential(orgID, peerID)
+	if err != nil {
+		http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+		return
+	}
+	if managed != nil && (managed.State == "active" || managed.State == "pending") {
+		writeJSON(w, http.StatusConflict, map[string]string{"error": "Managed credentials must be revoked through the managed credential API"})
+		return
+	}
+	if managed != nil {
+		if err := s.DeleteManagedCredential(orgID, peerID); err != nil {
+			http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+			return
+		}
+	}
 	if err := s.db.DeleteOrgPeerCredential(orgID, peerID); err != nil {
 		log.Printf("[org] DeleteOrgPeerCredential error: %v", err)
 		http.Error(w, `{"error":"failed to clear credential"}`, http.StatusInternalServerError)
@@ -156,6 +188,22 @@ func (s *Server) handleGetPeerConnectPassword(w http.ResponseWriter, r *http.Req
 		}
 	}
 
+	managed, err := s.GetManagedCredential(orgID, peerID)
+	if err != nil {
+		log.Printf("[org] GetManagedCredential error: %v", err)
+		http.Error(w, `{"error":"internal"}`, http.StatusInternalServerError)
+		return
+	}
+	if managed != nil && !managedCredentialUsable(managed, time.Now().UTC()) {
+		if managed.State == "active" {
+			_ = s.db.DeleteOrgPeerCredential(orgID, peerID)
+			managed.State = "expired"
+			_ = s.SaveManagedCredential(managed)
+		}
+		writeJSON(w, http.StatusNotFound, map[string]any{"password_set": false})
+		return
+	}
+
 	row, err := s.db.GetOrgPeerCredential(orgID, peerID)
 	if err != nil {
 		log.Printf("[org] GetOrgPeerCredential error: %v", err)
@@ -188,5 +236,5 @@ func (s *Server) handleGetPeerConnectPassword(w http.ResponseWriter, r *http.Req
 
 func authIsServerAdmin(role string) bool {
 	r := strings.ToLower(strings.TrimSpace(role))
-	return r == "admin" || r == "server_admin"
+	return auth.IsSuperAdminRole(r) || r == auth.RoleGlobalAdmin || r == auth.RoleServerAdmin
 }

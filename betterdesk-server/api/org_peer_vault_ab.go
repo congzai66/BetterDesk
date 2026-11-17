@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // injectOrgPeerCredentialsIntoAB decrypts org vault passwords and injects the
@@ -32,6 +33,14 @@ func (s *Server) injectOrgPeerCredentialsIntoAB(r *http.Request, data string) st
 		}
 		for _, f := range flags {
 			if f == nil || f.PeerID == "" || secrets[f.PeerID] != "" {
+				continue
+			}
+			managed, err := s.GetManagedCredential(orgID, f.PeerID)
+			if err != nil {
+				log.Printf("[api] managed credential state for AB inject peer=%s: %v", f.PeerID, err)
+				continue
+			}
+			if managed != nil && !managedCredentialUsable(managed, time.Now().UTC()) {
 				continue
 			}
 			row, err := s.db.GetOrgPeerCredential(orgID, f.PeerID)
