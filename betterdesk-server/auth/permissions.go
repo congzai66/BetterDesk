@@ -18,11 +18,17 @@ const (
 	PermDeviceBan            = "device.ban"    // ban/unban
 	PermDeviceChangeID       = "device.change_id"
 	PermDeviceConnectionMode = "device.connection_mode" // normal <-> incoming-only
-	PermRemoteTargetView     = "remote_target.view"
-	PermRemoteTargetConnect  = "remote_target.connect"
-	PermRemoteTargetEdit     = "remote_target.edit"
-	PermRemoteTargetDelete   = "remote_target.delete"
-	PermRemoteTargetTest     = "remote_target.test"
+	// Managed credentials are separate from device.connect: connecting to a
+	// device does not imply permission to reveal or rotate its secrets.
+	PermCredentialView      = "credential.view"
+	PermCredentialRotate    = "credential.rotate"
+	PermDirectoryView       = "directory.view"
+	PermDirectorySync       = "directory.sync"
+	PermRemoteTargetView    = "remote_target.view"
+	PermRemoteTargetConnect = "remote_target.connect"
+	PermRemoteTargetEdit    = "remote_target.edit"
+	PermRemoteTargetDelete  = "remote_target.delete"
+	PermRemoteTargetTest    = "remote_target.test"
 
 	// User management permissions
 	PermUserView   = "user.view"
@@ -79,6 +85,7 @@ const (
 var AllPermissions = []string{
 	PermDeviceView, PermDeviceConnect, PermGuestCreate, PermDeviceEdit, PermDeviceDelete,
 	PermDeviceBan, PermDeviceChangeID, PermDeviceConnectionMode,
+	PermCredentialView, PermCredentialRotate, PermDirectoryView, PermDirectorySync,
 	PermRemoteTargetView, PermRemoteTargetConnect, PermRemoteTargetEdit,
 	PermRemoteTargetDelete, PermRemoteTargetTest,
 	PermUserView, PermUserCreate, PermUserEdit, PermUserDelete,
@@ -126,6 +133,7 @@ var DefaultRolePermissions = map[string]map[string]bool{
 	RoleGlobalAdmin: buildPermMap([]string{
 		PermUserView, PermUserCreate, PermUserEdit, PermUserDelete,
 		PermOrgCreate, PermOrgEdit, PermOrgDelete, PermOrgManageUsers, PermOrgManageDevices,
+		PermCredentialView, PermCredentialRotate, PermDirectoryView, PermDirectorySync,
 		PermDeviceView, PermDeviceConnect, PermDeviceEdit, PermDeviceDelete,
 		PermGuestCreate,
 		PermDeviceBan, PermDeviceChangeID, PermDeviceConnectionMode,
@@ -142,6 +150,7 @@ var DefaultRolePermissions = map[string]map[string]bool{
 
 	RoleOperator: buildPermMap([]string{
 		PermDeviceView, PermDeviceConnect, PermDeviceEdit, PermDeviceConnectionMode,
+		PermCredentialView, PermDirectoryView,
 		PermRemoteTargetView, PermRemoteTargetConnect, PermRemoteTargetTest,
 		PermGuestCreate,
 		PermUserView,

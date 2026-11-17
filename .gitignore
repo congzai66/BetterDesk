@@ -101,6 +101,8 @@ config.local.*
 *credentials*
 !docker/show-admin-credentials.sh
 !docker/bootstrap-admin-credentials.sh
+!betterdesk-server/api/managed_credentials.go
+!docs/adr/0001-managed-ad-credentials.md
 *.password
 *.passwords
 *_password.txt

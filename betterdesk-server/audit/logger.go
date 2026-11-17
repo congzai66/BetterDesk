@@ -66,11 +66,15 @@ const (
 	ActionHelpRequestUpdated Action = "help_request_updated"
 	ActionChatMessage        Action = "chat_message"
 	// Org peer credential vault (#367) — never include password material in Details.
-	ActionOrgPeerCredentialSet   Action = "org_peer_credential_set"
-	ActionOrgPeerCredentialClear Action = "org_peer_credential_clear"
-	ActionOrgPeerCredentialFetch Action = "org_peer_credential_fetch"
-	ActionGuestSessionOpened     Action = "guest_session_opened"
-	ActionGuestSessionClosed     Action = "guest_session_closed"
+	ActionOrgPeerCredentialSet    Action = "org_peer_credential_set"
+	ActionOrgPeerCredentialClear  Action = "org_peer_credential_clear"
+	ActionOrgPeerCredentialFetch  Action = "org_peer_credential_fetch"
+	ActionManagedCredentialRotate Action = "managed_credential_rotate"
+	ActionManagedCredentialRevoke Action = "managed_credential_revoke"
+	ActionManagedCredentialExpire Action = "managed_credential_expire"
+	ActionDirectorySync           Action = "directory_sync"
+	ActionGuestSessionOpened      Action = "guest_session_opened"
+	ActionGuestSessionClosed      Action = "guest_session_closed"
 )
 
 // Event represents a single audit log entry.
