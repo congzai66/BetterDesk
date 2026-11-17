@@ -140,10 +140,11 @@ func correlateDirectoryObjects(entries []auth.DirectoryEntry, peers []*db.Peer, 
 }
 
 func (s *Server) executeDirectorySync(ctx context.Context, apply bool) (*directorySyncSummary, error) {
-	if !s.directorySyncMu.TryLock() {
+	runtime := managedRuntimeFor(s)
+	if !runtime.directorySyncMu.TryLock() {
 		return nil, errDirectorySyncRunning
 	}
-	defer s.directorySyncMu.Unlock()
+	defer runtime.directorySyncMu.Unlock()
 
 	entries, err := auth.SyncDirectory(ctx, s.loadLDAPConfigFromDB())
 	if err != nil {
