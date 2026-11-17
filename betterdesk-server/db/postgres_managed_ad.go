@@ -48,7 +48,14 @@ func (pg *PostgresDB) migrateManagedAD() error {
 	return nil
 }
 
+func (pg *PostgresDB) ensureManagedAD() error {
+	return pg.migrateManagedAD()
+}
+
 func (pg *PostgresDB) SaveManagedCredential(c *ManagedCredential) error {
+	if err := pg.ensureManagedAD(); err != nil {
+		return err
+	}
 	_, err := pg.pool.Exec(pg.ctx, `INSERT INTO managed_credentials
 		(org_id, peer_id, request_id, state, generation, expires_at, updated_by, last_error)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
@@ -60,6 +67,9 @@ func (pg *PostgresDB) SaveManagedCredential(c *ManagedCredential) error {
 }
 
 func (pg *PostgresDB) GetManagedCredential(orgID, peerID string) (*ManagedCredential, error) {
+	if err := pg.ensureManagedAD(); err != nil {
+		return nil, err
+	}
 	var c ManagedCredential
 	err := pg.pool.QueryRow(pg.ctx, `SELECT `+managedCredentialColumns+`
 		FROM managed_credentials WHERE org_id=$1 AND peer_id=$2`, orgID, peerID).Scan(
@@ -75,6 +85,9 @@ func (pg *PostgresDB) GetManagedCredential(orgID, peerID string) (*ManagedCreden
 }
 
 func (pg *PostgresDB) ListExpiredManagedCredentials(nowRFC3339 string, limit int) ([]*ManagedCredential, error) {
+	if err := pg.ensureManagedAD(); err != nil {
+		return nil, err
+	}
 	if limit <= 0 || limit > 1000 {
 		limit = 500
 	}
@@ -91,17 +104,23 @@ func (pg *PostgresDB) ListExpiredManagedCredentials(nowRFC3339 string, limit int
 			&c.ExpiresAt, &c.UpdatedBy, &c.LastError, &c.CreatedAt, &c.UpdatedAt); err != nil {
 			return nil, err
 		}
-		out = append(out, &c)
+		out = append(out, c)
 	}
 	return out, rows.Err()
 }
 
 func (pg *PostgresDB) DeleteManagedCredential(orgID, peerID string) error {
+	if err := pg.ensureManagedAD(); err != nil {
+		return err
+	}
 	_, err := pg.pool.Exec(pg.ctx, `DELETE FROM managed_credentials WHERE org_id=$1 AND peer_id=$2`, orgID, peerID)
 	return err
 }
 
 func (pg *PostgresDB) ReplaceDirectoryObjects(objects []*DirectoryObject) error {
+	if err := pg.ensureManagedAD(); err != nil {
+		return err
+	}
 	tx, err := pg.pool.Begin(pg.ctx)
 	if err != nil {
 		return err
@@ -122,6 +141,9 @@ func (pg *PostgresDB) ReplaceDirectoryObjects(objects []*DirectoryObject) error 
 }
 
 func (pg *PostgresDB) ListDirectoryObjects(kind, query string, limit int) ([]*DirectoryObject, error) {
+	if err := pg.ensureManagedAD(); err != nil {
+		return nil, err
+	}
 	if limit <= 0 || limit > 2000 {
 		limit = 500
 	}

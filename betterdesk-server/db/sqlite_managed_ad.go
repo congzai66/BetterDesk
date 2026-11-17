@@ -47,7 +47,16 @@ func (s *SQLiteDB) migrateManagedAD() error {
 	return nil
 }
 
+func (s *SQLiteDB) ensureManagedAD() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.migrateManagedAD()
+}
+
 func (s *SQLiteDB) SaveManagedCredential(c *ManagedCredential) error {
+	if err := s.ensureManagedAD(); err != nil {
+		return err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	_, err := s.db.Exec(`INSERT INTO managed_credentials
@@ -77,6 +86,9 @@ func scanManagedCredential(row interface{ Scan(...any) error }) (*ManagedCredent
 const managedCredentialColumns = `org_id, peer_id, request_id, state, generation, expires_at, updated_by, last_error, created_at, updated_at`
 
 func (s *SQLiteDB) GetManagedCredential(orgID, peerID string) (*ManagedCredential, error) {
+	if err := s.ensureManagedAD(); err != nil {
+		return nil, err
+	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return scanManagedCredential(s.db.QueryRow(`SELECT `+managedCredentialColumns+`
@@ -84,6 +96,9 @@ func (s *SQLiteDB) GetManagedCredential(orgID, peerID string) (*ManagedCredentia
 }
 
 func (s *SQLiteDB) ListExpiredManagedCredentials(nowRFC3339 string, limit int) ([]*ManagedCredential, error) {
+	if err := s.ensureManagedAD(); err != nil {
+		return nil, err
+	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if limit <= 0 || limit > 1000 {
@@ -107,6 +122,9 @@ func (s *SQLiteDB) ListExpiredManagedCredentials(nowRFC3339 string, limit int) (
 }
 
 func (s *SQLiteDB) DeleteManagedCredential(orgID, peerID string) error {
+	if err := s.ensureManagedAD(); err != nil {
+		return err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	_, err := s.db.Exec(`DELETE FROM managed_credentials WHERE org_id=? AND peer_id=?`, orgID, peerID)
@@ -114,6 +132,9 @@ func (s *SQLiteDB) DeleteManagedCredential(orgID, peerID string) error {
 }
 
 func (s *SQLiteDB) ReplaceDirectoryObjects(objects []*DirectoryObject) error {
+	if err := s.ensureManagedAD(); err != nil {
+		return err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	tx, err := s.db.Begin()
@@ -141,6 +162,9 @@ func (s *SQLiteDB) ReplaceDirectoryObjects(objects []*DirectoryObject) error {
 }
 
 func (s *SQLiteDB) ListDirectoryObjects(kind, query string, limit int) ([]*DirectoryObject, error) {
+	if err := s.ensureManagedAD(); err != nil {
+		return nil, err
+	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if limit <= 0 || limit > 2000 {
